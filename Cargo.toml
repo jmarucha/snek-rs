@@ -1,0 +1,11 @@
+[package]
+name = "snek-rs"
+version = "0.1.0"
+description = "Snek game in Rust. Blazing fast, memory safe."
+authors = ["Marucha, Jan <jan.marucha@intel.com>"]
+license = "MIT"
+edition = "2024"
+
+[dependencies]
+crossterm = "0.28.1"
+rand = "0.9.2"
