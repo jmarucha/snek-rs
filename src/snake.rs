@@ -1,14 +1,17 @@
-use std::collections::VecDeque;
 use std::collections::BTreeSet;
+use std::collections::VecDeque;
 
 pub struct Snake {
     occupied_fields: BTreeSet<(u16, u16)>,
-    field_queue: VecDeque<(u16, u16)>
+    field_queue: VecDeque<(u16, u16)>,
 }
 
 impl Snake {
-    pub fn new(initial_pos: (u16,u16), initial_len: u16) -> Self {
-        let mut snake = Self {occupied_fields: BTreeSet::default(), field_queue: VecDeque::default()};
+    pub fn new(initial_pos: (u16, u16), initial_len: u16) -> Self {
+        let mut snake = Self {
+            occupied_fields: BTreeSet::default(),
+            field_queue: VecDeque::default(),
+        };
         for _ in 0..initial_len {
             snake.add_segment(initial_pos);
         }
@@ -34,7 +37,7 @@ impl Snake {
         self.field_queue.pop_front();
     }
 
-    pub fn is_inside(&self, pos: &(u16, u16)) -> bool{
+    pub fn is_inside(&self, pos: &(u16, u16)) -> bool {
         self.occupied_fields.contains(pos)
     }
 }

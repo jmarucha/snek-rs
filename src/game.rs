@@ -1,11 +1,10 @@
-
-use rand::random_range;
+use crate::Render;
 use crate::clock::Clock;
 use crate::snake::Snake;
-use crate::Render;
+use crossterm::event::KeyCode;
+use rand::random_range;
 use std::thread::sleep;
 use std::time::Duration;
-use crossterm::event::{KeyCode};
 
 #[derive(Clone)]
 pub enum Direction {
@@ -13,7 +12,7 @@ pub enum Direction {
     Down,
     Left,
     Right,
-    None
+    None,
 }
 
 pub struct Game {
@@ -25,13 +24,13 @@ pub struct Game {
     direction: Direction,
     pub game_over: bool,
     food_pos: (u16, u16),
-    score: u16
+    score: u16,
 }
 
 impl Game {
     pub fn new(w: u16, h: u16, render: Render) -> Game {
         Game {
-            snake: Snake::new((10,10), 4),
+            snake: Snake::new((10, 10), 4),
             board_size: (w, h),
             render,
             clock: Clock::new(30.),
@@ -56,49 +55,61 @@ impl Game {
     }
 
     fn clear_field(&mut self, pos: (u16, u16)) {
-        self.render.draw_at(GraphicsObject::Empty, pos.0, pos.1).expect("Gówno");
+        self.render
+            .draw_at(GraphicsObject::Empty, pos.0, pos.1)
+            .expect("Gówno");
     }
     fn draw_snake_segment(&mut self, pos: (u16, u16)) {
-        self.render.draw_at(GraphicsObject::SnakeSegment, pos.0, pos.1).expect("Gówno");
+        self.render
+            .draw_at(GraphicsObject::SnakeSegment, pos.0, pos.1)
+            .expect("Gówno");
     }
 
     fn draw_food(&mut self) {
-        self.render.draw_at(GraphicsObject::Food, self.food_pos.0, self.food_pos.1).expect("Gówno");
+        self.render
+            .draw_at(GraphicsObject::Food, self.food_pos.0, self.food_pos.1)
+            .expect("Gówno");
     }
 
     fn on_clock(&mut self) {
         self.try_move_player();
-        self.render.write_header(format!("Score: {}", self.score), 10).expect("Gówno");
+        self.render
+            .write_header(format!("Score: {}", self.score), 10)
+            .expect("Gówno");
     }
-
 
     fn try_move_player(&mut self) {
         let head_pos = self.snake.get_first_segment();
         let new_pos = match self.direction {
-            Direction::Up => (head_pos.0, head_pos.1-1),
-            Direction::Down => (head_pos.0, head_pos.1+1),
-            Direction::Left => (head_pos.0-1, head_pos.1),
-            Direction::Right => (head_pos.0+1, head_pos.1),
+            Direction::Up => (head_pos.0, head_pos.1 - 1),
+            Direction::Down => (head_pos.0, head_pos.1 + 1),
+            Direction::Left => (head_pos.0 - 1, head_pos.1),
+            Direction::Right => (head_pos.0 + 1, head_pos.1),
             Direction::None => return,
         };
-
 
         self.previous_direction = self.direction.clone();
         self.process_new_head_pos(new_pos)
     }
 
     fn generate_new_food(&mut self) {
-        let new_pos = (random_range(1..self.board_size.0-1), random_range(1..self.board_size.1-1));
+        let new_pos = (
+            random_range(1..self.board_size.0 - 1),
+            random_range(1..self.board_size.1 - 1),
+        );
         self.food_pos = new_pos;
         self.draw_food()
     }
 
     fn process_new_head_pos(&mut self, new_pos: (u16, u16)) {
-        if new_pos.0 < 1 || new_pos.0 >= self.board_size.0-1 ||
-            new_pos.1 < 1 || new_pos.1 >= self.board_size.1-1 ||
-            self.snake.is_inside(&new_pos) {
+        if new_pos.0 < 1
+            || new_pos.0 >= self.board_size.0 - 1
+            || new_pos.1 < 1
+            || new_pos.1 >= self.board_size.1 - 1
+            || self.snake.is_inside(&new_pos)
+        {
             self.game_over = true;
-            return
+            return;
         }
 
         self.draw_snake_segment(new_pos);
@@ -114,14 +125,13 @@ impl Game {
         }
     }
 
-
     pub fn process_keystroke(&mut self, key: KeyCode) {
         match key {
             KeyCode::Up | KeyCode::Char('w') => self.set_direction(Direction::Up),
             KeyCode::Down | KeyCode::Char('s') => self.set_direction(Direction::Down),
             KeyCode::Left | KeyCode::Char('a') => self.set_direction(Direction::Left),
-            KeyCode::Right | KeyCode::Char('d') =>  self.set_direction(Direction::Right),
-            _ =>{},
+            KeyCode::Right | KeyCode::Char('d') => self.set_direction(Direction::Right),
+            _ => {}
         }
     }
 
@@ -131,23 +141,25 @@ impl Game {
             (Direction::Down, Direction::Up) => return,
             (Direction::Left, Direction::Right) => return,
             (Direction::Right, Direction::Left) => return,
-            _ => new_direction
+            _ => new_direction,
         }
-
     }
 
     pub fn end(&mut self) {
         sleep(Duration::from_secs(1));
         self.render.cleanup_screen();
-        println!("\
+        println!(
+            "\
 +-----------------------+
 | You scored{:3} points. |
-+-----------------------+", self.score);
++-----------------------+",
+            self.score
+        );
     }
 }
 
 pub enum GraphicsObject {
     SnakeSegment,
     Food,
-    Empty
+    Empty,
 }

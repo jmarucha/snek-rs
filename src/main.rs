@@ -1,20 +1,19 @@
 use std::io::{self, Write};
 use std::time::Duration;
 
-use crossterm::cursor::{self, Show, MoveTo};
+use crossterm::cursor::{self, MoveTo, Show};
 use crossterm::event::{Event, KeyCode, KeyModifiers};
-use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, EnableLineWrap};
-use crossterm::style::{PrintStyledContent, Print, Attribute, Color, Stylize};
-use crossterm::{QueueableCommand, execute, event};
+use crossterm::style::{Attribute, Color, Print, PrintStyledContent, Stylize};
+use crossterm::terminal::{self, EnableLineWrap, EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::{QueueableCommand, event, execute};
 
+mod clock;
 mod game;
 mod snake;
-mod clock;
 use game::Game;
 use game::GraphicsObject;
 
 fn main() -> io::Result<()> {
-
     let (w, h) = terminal::size()?;
     let mut framebuffer = Render::new(w, h);
     framebuffer.init_screen()?;
@@ -23,7 +22,9 @@ fn main() -> io::Result<()> {
     game.start();
     loop {
         game.run();
-        if event::poll(Duration::from_secs(0))? && let Event::Key(event) = event::read()? {
+        if event::poll(Duration::from_secs(0))?
+            && let Event::Key(event) = event::read()?
+        {
             match (event.code, event.modifiers) {
                 (KeyCode::Char('q'), _) => break,
                 (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
@@ -35,46 +36,46 @@ fn main() -> io::Result<()> {
         }
     }
     game.end();
-     Ok(())
+    Ok(())
 }
-
-
 
 struct Render {
     w: u16,
     h: u16,
-    stdout: io::Stdout
+    stdout: io::Stdout,
 }
 
 impl Render {
-    fn new(w: u16, h: u16) -> Render{
-        Render {w, h, stdout: io::stdout()}
+    fn new(w: u16, h: u16) -> Render {
+        Render {
+            w,
+            h,
+            stdout: io::stdout(),
+        }
     }
 
     fn init_screen(&mut self) -> io::Result<()> {
         terminal::enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen, cursor::Hide)?;
-        self.stdout
-            .queue(EnableLineWrap)?
-            .queue(MoveTo(0, 0))?;
+        self.stdout.queue(EnableLineWrap)?.queue(MoveTo(0, 0))?;
 
         // first line
         self.stdout.queue(Print('+'))?;
-        for _ in 1..self.w-1 {
+        for _ in 1..self.w - 1 {
             self.stdout.queue(Print('-'))?;
         }
         self.stdout.queue(Print('+'))?;
         // left and right border
-        for _ in 1..self.h-1 {
+        for _ in 1..self.h - 1 {
             self.stdout.queue(Print('|'))?;
-            for _ in 1..(self.w-1) {
+            for _ in 1..(self.w - 1) {
                 self.stdout.queue(Print(' '))?;
             }
             self.stdout.queue(Print('|'))?;
         }
         // last line
         self.stdout.queue(Print('+'))?;
-        for _ in 1..self.w-1 {
+        for _ in 1..self.w - 1 {
             self.stdout.queue(Print('-'))?;
         }
         self.stdout.queue(Print('+'))?;
@@ -95,8 +96,8 @@ impl Render {
         self.stdout.flush()
     }
     fn write_header(&mut self, text: String, _len: u16) -> io::Result<()> {
-            self.stdout.queue(MoveTo(3, 0))?.queue(Print(text))?;
-            self.stdout.flush()
+        self.stdout.queue(MoveTo(3, 0))?.queue(Print(text))?;
+        self.stdout.flush()
     }
 
     fn cleanup_screen(&mut self) {
@@ -106,8 +107,15 @@ impl Render {
 }
 use rand::prelude::IndexedRandom;
 
-
 fn random_color() -> Color {
-    *[Color::Blue, Color::Yellow, Color::Magenta,
-        Color::Cyan, Color::Red, Color::Green].choose(&mut rand::rng()).expect("Gówno")
+    *[
+        Color::Blue,
+        Color::Yellow,
+        Color::Magenta,
+        Color::Cyan,
+        Color::Red,
+        Color::Green,
+    ]
+    .choose(&mut rand::rng())
+    .expect("Gówno")
 }
